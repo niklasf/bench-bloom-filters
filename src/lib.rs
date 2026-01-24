@@ -8,26 +8,18 @@ pub use random_filter::RandomFilter;
 mod container;
 pub use container::{Container, XXHashWrapper};
 
-const TRIALS: usize = 500_000_000;
+/// Detects smaller false positives (depth)
+const TRIALS_PER_BLOOM: usize = 200_000_000;
+/// Controls min and max, smooths curve.
+const NUM_THREADS: u64 = 16;
+/// Controls how many x values there are
+const GRANULARITY: f64 = 256.0;
 
 fn take<T: Iterator<Item = u64>>(
     iter: &mut T,
     num: usize,
 ) -> impl Iterator<Item = u64> + use<'_, T> {
     (0..=num).map(|_| iter.next().unwrap())
-}
-
-fn false_pos_rate<X: Hash>(
-    filter: &impl Container<X>,
-    anti_vals: impl IntoIterator<Item = X>,
-) -> f64 {
-    let mut total = 0;
-    let mut false_positives = 0;
-    for x in anti_vals.into_iter() {
-        total += 1;
-        false_positives += filter.check(&x) as usize;
-    }
-    (false_positives as f64) / (total as f64)
 }
 
 pub fn random_numbers(seed: u64) -> impl Iterator<Item = u64> {
@@ -47,7 +39,7 @@ pub(crate) fn false_pos_rate_adaptive<X: Hash>(
 
         // Break early if we've seen enough false positives
         let fpn = (false_positives + 1) as f64; // will be zero
-        if fpn.powf(1.5) as usize * total >= TRIALS {
+        if fpn.powf(1.5) as usize * total >= TRIALS_PER_BLOOM {
             break;
         }
     }
@@ -65,20 +57,19 @@ impl Iterator for Ticks {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.cur += 1 << self.step as u32;
-        self.step += 1.0 / 64.0;
+        self.step += 1.0 / GRANULARITY;
         Some(self.cur)
     }
 }
 
 //// Returns (num_bits, avg fp, min fp, max fp)
-pub fn list_fp2<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64, f64, f64, f64)> {
-    let num_trials: u64 = 16;
-    let data = (0..num_trials)
+pub fn list_fp<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64, f64, f64, f64)> {
+    let data = (0..NUM_THREADS)
         .into_par_iter()
         .map(|trial| {
             let mut res = Vec::new();
 
-            let member_offset = trial.wrapping_mul((u64::MAX / 2) / num_trials);
+            let member_offset = trial.wrapping_mul((u64::MAX / 2) / NUM_THREADS);
             let non_member_offset = member_offset + (u64::MAX / 2);
             let mut members = member_offset..=u64::MAX / 2;
             let mut non_members = non_member_offset..=u64::MAX;
@@ -96,7 +87,7 @@ pub fn list_fp2<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64
                     filter.extend(take(&mut members, num_items - prev_num_items));
                 }
 
-                let fp = false_pos_rate_adaptive(&filter, take(&mut non_members, TRIALS));
+                let fp = false_pos_rate_adaptive(&filter, take(&mut non_members, TRIALS_PER_BLOOM));
                 let load = num_items as f64 / num_bits as f64;
 
                 res.push((load, fp));
@@ -116,7 +107,7 @@ pub fn list_fp2<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64
         let mut min = f64::MAX;
         let mut max = f64::MIN;
 
-        for j in 0..num_trials as usize {
+        for j in 0..NUM_THREADS as usize {
             let err = data[j][i].1;
             total += err;
             if err < min {
@@ -127,7 +118,7 @@ pub fn list_fp2<T: Container<u64>>(num_bits: usize) -> impl Iterator<Item = (f64
             }
         }
 
-        (data[0][i].0, total / num_trials as f64, min, max)
+        (data[0][i].0, total / NUM_THREADS as f64, min, max)
     })
 }
 

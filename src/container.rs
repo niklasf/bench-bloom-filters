@@ -55,6 +55,7 @@ macro_rules! impl_container_fastbloom {
 impl_container_fastbloom!(
     fastbloom::DefaultHasher = "fastbloom",
     ahash::RandomState = "fastbloom",
+    foldhash::fast::RandomState = "fastbloom",
 );
 
 impl<X: Hash> Container<X> for AtomicBloomFilter<ahash::RandomState> {
@@ -68,6 +69,29 @@ impl<X: Hash> Container<X> for AtomicBloomFilter<ahash::RandomState> {
     fn new(num_bits: usize, num_items: usize) -> Self {
         AtomicBloomFilter::with_num_bits(num_bits)
             .hasher(ahash::RandomState::default())
+            .expected_items(num_items)
+    }
+    fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
+        for x in items {
+            self.insert(&x);
+        }
+    }
+    fn name() -> &'static str {
+        "fastbloom (Atomic)"
+    }
+}
+
+impl<X: Hash> Container<X> for AtomicBloomFilter<foldhash::fast::RandomState> {
+    #[inline]
+    fn check(&self, s: &X) -> bool {
+        self.contains(s)
+    }
+    fn num_hashes(&self) -> usize {
+        self.num_hashes() as usize
+    }
+    fn new(num_bits: usize, num_items: usize) -> Self {
+        AtomicBloomFilter::with_num_bits(num_bits)
+            .hasher(foldhash::fast::RandomState::default())
             .expected_items(num_items)
     }
     fn extend<I: Iterator<Item = X>>(&mut self, items: I) {
@@ -239,7 +263,7 @@ impl<X: Hash> Container<X> for ProbBloomFilter<X> {
 
 impl Container<u64> for crate::RandomFilter {
     #[inline]
-    fn check(&self, s: &u64) -> bool {
+    fn check(&self, _: &u64) -> bool {
         self.contains()
     }
     fn num_hashes(&self) -> usize {
@@ -249,7 +273,7 @@ impl Container<u64> for crate::RandomFilter {
         crate::RandomFilter::new(num_bits, num_items)
     }
     fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
-        for x in items {
+        for _ in items {
             self.insert();
         }
     }

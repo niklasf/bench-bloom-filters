@@ -12,7 +12,7 @@ filters = [
     ('bloom', 'black'),
     ('bloomfilter', 'black'),
     ('probabilistic-collections', 'black'),
-    # ('solana-bloom', 'black'),
+    ('solana-bloom', 'black'),
     ('fastbloom', cm[0]),
     ('fastbloom (atomic)', cm[0]),
     ]
@@ -20,6 +20,12 @@ filters = [
 filters = dict(filters)
 
 directory = r"target\criterion"
+
+def map_name(name):
+    if name == 'probabilistic-collections':
+        return 'probabilistic-\ncollections'
+    else:
+        return name
 
 def is_input(x):
     try:
@@ -70,7 +76,7 @@ for benches_name, title in zip(get_non_reports(directory), [
         
         x = []
         y = []
-        for x_d in get_non_reports( directory + '\\' + benches_name + '\\' + entity):
+        for x_d in get_non_reports(directory + '\\' + benches_name + '\\' + entity):
             if not is_input(x_d): continue
 
             if int(x_d) <= 10: continue
@@ -95,8 +101,9 @@ for benches_name, title in zip(get_non_reports(directory), [
     for i, (name, latency) in enumerate(zip(names, avg_y)):
         b.append(
             ax.bar(
-                name, latency,
-                width=0.85, 
+                map_name(name),
+                latency,
+                width=0.85,
                 color=filters[name], 
                 align='center', 
                 #edgecolor = 'black', 

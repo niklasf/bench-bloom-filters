@@ -2,6 +2,7 @@ use criterion::{
     black_box, criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, BenchmarkId,
     Criterion, PlotConfiguration,
 };
+use std::time::Duration;
 
 use bloomfilter::Bloom;
 use fastbloom_rs;
@@ -11,7 +12,10 @@ use std::hash::Hash;
 
 use bloom_filter_benches::*;
 
+/// num items and num bytes is ~8 hashes per item,
+/// which is the hardcoded num hashes for sbbf.
 const NUM_BYTES: usize = 1 << 16;
+const NUM_ITEMS: usize = 45_000;
 
 fn run_bench_for<T: Container<u64>>(
     group: &mut BenchmarkGroup<'_, WallTime>,
@@ -65,33 +69,30 @@ fn bench(c: &mut Criterion) {
             item_type,
             NUM_BYTES / 1000
         ));
+        group.measurement_time(Duration::from_secs(10));
         group.plot_config(PlotConfiguration::default());
-        for num_items in [45_000] {
-            /*
-            run_bench_for::<fastbloom::BloomFilter<ahash::RandomState>>(
-                &mut group, num_items, seed,
-            );
-            run_bench_for::<fastbloom::AtomicBloomFilter<ahash::RandomState>>(
-                &mut group, num_items, seed,
-            );
 
-            run_bench_for::<bloom::BloomFilter>(&mut group, num_items, seed);
-            run_bench_for::<Bloom<u64>>(&mut group, num_items, seed);
-            run_bench_for::<ProbBloomFilter<u64>>(&mut group, num_items, seed);
-            run_bench_for::<sbbf_rs_safe::Filter>(&mut group, num_items, seed);
-            */
-            run_bench_for::<solana_bloom::bloom::Bloom<solana_program::hash::Hash>>(
-                &mut group, num_items, seed,
-            );
-            // run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, num_items, seed);
-        }
+        run_bench_for::<fastbloom::BloomFilter<foldhash::fast::RandomState>>(
+            &mut group, NUM_ITEMS, seed,
+        );
+        run_bench_for::<fastbloom::AtomicBloomFilter<foldhash::fast::RandomState>>(
+            &mut group, NUM_ITEMS, seed,
+        );
+        run_bench_for::<sbbf_rs_safe::Filter>(&mut group, NUM_ITEMS, seed);
+        run_bench_for::<bloom::BloomFilter>(&mut group, NUM_ITEMS, seed);
+        run_bench_for::<Bloom<u64>>(&mut group, NUM_ITEMS, seed);
+        run_bench_for::<ProbBloomFilter<u64>>(&mut group, NUM_ITEMS, seed);
+        run_bench_for::<solana_bloom::bloom::Bloom<solana_program::hash::Hash>>(
+            &mut group, NUM_ITEMS, seed,
+        );
+        // run_bench_for::<fastbloom_rs::BloomFilter>(&mut group, NUM_ITEMS, seed);
 
         group.finish();
     }
 }
 criterion_group!(
     name = benches;
-    config = Criterion::default();
+    config = Criterion::default().sample_size(5000);
     targets = bench
 );
 criterion_main!(benches);

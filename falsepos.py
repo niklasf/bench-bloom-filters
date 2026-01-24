@@ -1,3 +1,13 @@
+'''
+Plots false positive rate rates of various Rust Bloom filters.
+The false pos rates are calculated in Rust in main.rs.
+
+```
+cargo run --release
+python falsepos.py
+```
+'''
+
 from math import log10, log2, log
 import matplotlib.pyplot as plt 
 import csv
@@ -9,20 +19,12 @@ plt.rcParams['font.size'] = 18
 
 viridis = colormaps['viridis']
 magma = colormaps['magma']
-# plt.style.use('dark_background')
-'''
-min_size = 12
-max_size = 22
-color_step =  0 if max_size - min_size == 0 else 1 / (max_size - min_size)
-filters = [('hyperloglockless (%d bytes)' % (2**i), magma((i - min_size) * color_step)) for i in range(min_size, max_size + 1)]
-'''
 
 alpha = 1
 lw = 2.0
 
 cm = [colormaps['Dark2'](i / 8) for i in range(8)]
 filters = [
-    
     ('bloom', cm[1], alpha, lw),
     ('bloomfilter', cm[2], alpha, lw),
     ('sbbf', cm[3], alpha, lw),
@@ -30,7 +32,6 @@ filters = [
     ('solana-bloom', cm[5], alpha, lw),
     # ('Theoretical Best', 'grey', 1, lw),
     ('fastbloom', cm[0], 1, lw),
-    # ('oldfastbloom', 'r', 1, lw),
 ]
 
 fig, ax = plt.subplots()
@@ -40,24 +41,6 @@ def custom_format(yy, _):
         return f"{int(yy)}"
     else:
         return f"{yy:.8f}".rstrip("0").rstrip(".")
-
-# https://cglab.ca/~morin/publications/ds/bloom-submitted.pdf
-def theoretical_best(r):
-    m = 1 << 16
-    n = r / m
-    k = log(2) * m / n
-    d = (m**(k *(n+1)))
-    total = 0
-    for i in range(1, m + 1):
-        total += (i**k) * math.factorial(i) *  math.comb(m, i) * stirling(k*n, i)
-    return total / d
-
-def stirling(kn, i):
-    total = 0
-    for j in range(0, i + 1):
-        total += (-1)**j * math.comb(i, j) * (j**kn)
-    return total / math.factorial(i)
-
 
 for i, (name, color, aa, lw) in enumerate(filters):
     file_name = 'Acc/%s.csv' % name
