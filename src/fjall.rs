@@ -106,7 +106,7 @@ impl Container<u64> for FjallBloom {
         }
     }
     fn name() -> &'static str {
-        "fjall-bloom"
+        "fjall"
     }
 }
 

@@ -16,6 +16,7 @@ from matplotlib.ticker import ScalarFormatter
 from matplotlib.ticker import FuncFormatter
 import math
 plt.rcParams['font.size'] = 18
+plt.rcParams['figure.figsize'] = (16, 10)
 
 viridis = colormaps['viridis']
 magma = colormaps['magma']
@@ -25,14 +26,9 @@ lw = 2.0
 
 cm = [colormaps['Dark2'](i / 8) for i in range(8)]
 filters = [
-    ('fjall-bloom', cm[6], alpha, lw),
-    ('bloom', cm[1], alpha, lw),
-    ('bloomfilter', cm[2], alpha, lw),
-    ('sbbf', cm[3], alpha, lw),
-    ('probabilistic-collections', cm[4], alpha, lw),
-    #('solana-bloom', cm[5], alpha, lw),
-    # ('Theoretical Best', 'grey', 1, lw),
-    ('fastbloom', cm[0], 1, lw),
+    ('fastbloom-xxhash', cm[0], 1, lw),
+    ('fjall-orig', cm[1], alpha, lw),
+    ('fjall', cm[2], alpha, lw),
 ]
 
 fig, ax = plt.subplots()
@@ -100,3 +96,5 @@ plt.grid()
 # https://stackoverflow.com/questions/67033128/matplotlib-order-of-legend-entries
 plt.legend(handles,labels,loc='lower right')
 plt.show()
+
+plt.savefig('falsepos.png')

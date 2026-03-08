@@ -128,24 +128,23 @@ impl<X: Hash> Container<X> for Bloom<X> {
 impl Container<u64> for BloomFilter<XXHashWrapper> {
     #[inline]
     fn check(&self, s: &u64) -> bool {
-        self.contains(&xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
+        self.contains_hash(xxhash_rust::xxh3::xxh3_64(&s.to_be_bytes()))
     }
     fn num_hashes(&self) -> usize {
         self.num_hashes() as usize
     }
     fn new(num_bits: usize, num_items: usize) -> Self {
-        let res = BloomFilter::with_num_bits(num_bits)
+        BloomFilter::with_num_bits(num_bits)
             .hasher(XXHashWrapper(0))
-            .expected_items(num_items);
-        res
+            .expected_items(num_items)
     }
     fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
         for x in items {
-            self.insert(&xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
+            self.insert_hash(xxhash_rust::xxh3::xxh3_64(&x.to_be_bytes()));
         }
     }
     fn name() -> &'static str {
-        "fastbloom - xxhash"
+        "fastbloom-xxhash"
     }
 }
 

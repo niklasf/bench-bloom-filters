@@ -1,6 +1,7 @@
 use bloom_filter_benches::*;
 use colored::Colorize;
 use console::strip_ansi_codes;
+use fastbloom::BloomFilter;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
@@ -44,13 +45,14 @@ fn main() -> std::io::Result<()> {
     let now = Instant::now();
 
     write_false_pos_data::<FjallBloom>()?;
+    write_false_pos_data::<BloomFilter<XXHashWrapper>>()?;
 
-    write_false_pos_data::<bloom::BloomFilter>()?;
+    //write_false_pos_data::<bloom::BloomFilter>()?;
     //write_false_pos_data::<bloomfilter::Bloom<u64>>()?;
     //write_false_pos_data::<sbbf_rs_safe::Filter>()?;
     //write_false_pos_data::<probabilistic_collections::bloom::BloomFilter<u64>>()?;
     //write_false_pos_data::<solana_bloom::bloom::Bloom<solana_program::hash::Hash>>()?;
-    write_false_pos_data::<fastbloom::BloomFilter<ahash::RandomState>>()?;
+    //write_false_pos_data::<fastbloom::BloomFilter<ahash::RandomState>>()?;
     //write_false_pos_data::<fastbloom::BloomFilter<foldhash::fast::RandomState>>()?;
     //write_false_pos_data::<rapidbloom::Filter<ahash::RandomState>>()?;
     //write_false_pos_data::<crate::RandomFilter>()?;
