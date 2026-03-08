@@ -11,45 +11,25 @@ pub struct FjallBloom {
 }
 
 impl FjallBloom {
-    pub fn with_bits_per_key(n: usize, bits_per_key: f32) -> Self {
-        dbg!(n, bits_per_key);
-
+    pub fn with_n_and_total_bits(n: usize, total_bits: usize) -> Self {
         assert!(n > 0);
-        assert!(bits_per_key > 0.0);
+        assert!(total_bits > 0);
 
-        let m = n * (bits_per_key as usize);
+        let bytes = vec![0; total_bits.div_ceil(8)];
+        let m = bytes.len() * 8;
+
+        let bits_per_key = m as f32 / n as f32;
         let k = ((bits_per_key * LN_2) as usize).max(1);
-        let bytes = vec![0; m.div_ceil(8)];
 
-        FjallBloom {
-            m: bytes.len() * 8,
-            k,
-            bytes,
-        }
-    }
-
-    pub fn with_n_and_num_bits(n: usize, num_bits: usize) -> Self {
-        assert!(n > 0);
-        assert!(num_bits > 0);
-
-        let m = num_bits.div_ceil(64) * 64;
-        let bits_per_key = num_bits as f32 / n as f32;
-        let k = ((bits_per_key * LN_2) as usize).max(1);
-        let bytes = vec![0; m.div_ceil(8)];
-
-        FjallBloom {
-            m: bytes.len() * 8,
-            k,
-            bytes,
-        }
+        FjallBloom { bytes, m, k }
     }
 
     pub fn add_hash(&mut self, mut h1: u64) {
         let mut h2 = secondary_hash(h1);
 
         for i in 1..=(self.k as u64) {
-            let idx = (h1 % self.m as u64) as usize;
-            self.enable_bit(idx);
+            let idx = (h1 % self.m as u64);
+            self.enable_bit(idx as usize);
 
             h1 = h1.wrapping_add(h2);
             h2 = h2.wrapping_mul(i);
@@ -66,8 +46,8 @@ impl FjallBloom {
         let mut h2 = secondary_hash(h1);
 
         for i in 1..=(self.k as u64) {
-            let idx = (h1 % self.m as u64) as usize;
-            if !self.is_bit_enabled(idx) {
+            let idx = (h1 % self.m as u64);
+            if !self.is_bit_enabled(idx as usize) {
                 return false;
             }
 
@@ -86,7 +66,6 @@ impl FjallBloom {
 }
 
 fn secondary_hash(h1: u64) -> u64 {
-    // Taken from https://github.com/tomtomwombat/fastbloom
     h1.wrapping_shr(32).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95)
 }
 
@@ -98,7 +77,9 @@ impl Container<u64> for FjallBloom {
         self.k
     }
     fn new(num_bits: usize, num_items: usize) -> Self {
-        Self::with_n_and_num_bits(num_items, num_bits)
+        // For fairness, round up to nearest multiple of 64 bits like
+        // fastbloom.
+        Self::with_n_and_total_bits(num_items, num_bits.div_ceil(64) * 64)
     }
     fn extend<I: Iterator<Item = u64>>(&mut self, items: I) {
         for x in items {

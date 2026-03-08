@@ -27,7 +27,7 @@ lw = 2.0
 cm = [colormaps['Dark2'](i / 8) for i in range(8)]
 filters = [
     ('fastbloom-xxhash', cm[0], 1, lw),
-    ('fjall-orig', cm[1], alpha, lw),
+    #('fjall-orig', cm[1], alpha, lw),
     ('fjall', cm[2], alpha, lw),
 ]
 

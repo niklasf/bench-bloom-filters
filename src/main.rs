@@ -1,7 +1,6 @@
 use bloom_filter_benches::*;
 use colored::Colorize;
 use console::strip_ansi_codes;
-use fastbloom::BloomFilter;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::Instant;
