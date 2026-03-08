@@ -43,17 +43,18 @@ fn main() -> std::io::Result<()> {
     println!("{}", "Benching Bloom filters...\n".purple().bold());
     let now = Instant::now();
 
-    write_false_pos_data::<bloom::BloomFilter>()?;
-    write_false_pos_data::<sbbf_rs_safe::Filter>()?;
-    write_false_pos_data::<bloomfilter::Bloom<u64>>()?;
-    write_false_pos_data::<probabilistic_collections::bloom::BloomFilter<u64>>()?;
-    //write_false_pos_data::<fastbloom::BloomFilter<ahash::RandomState>>()?;
-    //write_false_pos_data::<fastbloom::BloomFilter<foldhash::fast::RandomState>>()?;
-    //write_false_pos_data::<solana_bloom::bloom::Bloom<solana_program::hash::Hash>>()?;
-    //write_false_pos_data::<rapidbloom::Filter<ahash::RandomState>>()?;
+    write_false_pos_data::<FjallBloom>()?;
 
-    // write_false_pos_data::<crate::RandomFilter>()?;
-    // write_false_pos_data::<fastbloom_rs::BloomFilter>()?;
+    write_false_pos_data::<bloom::BloomFilter>()?;
+    //write_false_pos_data::<bloomfilter::Bloom<u64>>()?;
+    //write_false_pos_data::<sbbf_rs_safe::Filter>()?;
+    //write_false_pos_data::<probabilistic_collections::bloom::BloomFilter<u64>>()?;
+    //write_false_pos_data::<solana_bloom::bloom::Bloom<solana_program::hash::Hash>>()?;
+    write_false_pos_data::<fastbloom::BloomFilter<ahash::RandomState>>()?;
+    //write_false_pos_data::<fastbloom::BloomFilter<foldhash::fast::RandomState>>()?;
+    //write_false_pos_data::<rapidbloom::Filter<ahash::RandomState>>()?;
+    //write_false_pos_data::<crate::RandomFilter>()?;
+    //write_false_pos_data::<fastbloom_rs::BloomFilter>()?;
 
     println!("");
     let done = format!("Done in {} seconds.", now.elapsed().as_secs());

@@ -3,6 +3,8 @@ use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
 use std::hash::Hash;
 
+mod fjall;
+pub use fjall::FjallBloom;
 mod random_filter;
 pub use random_filter::RandomFilter;
 mod container;

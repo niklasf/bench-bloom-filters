@@ -283,6 +283,7 @@ impl Container<u64> for crate::RandomFilter {
 }
 
 use rand::Rng;
+
 impl Container<u64> for solana_bloom::bloom::Bloom<solana_program::hash::Hash> {
     #[inline]
     fn check(&self, x: &u64) -> bool {
